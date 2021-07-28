@@ -411,7 +411,7 @@ export default class TagRenderingConfig {
     public shouldSplit(leftRightDistinctions): boolean {
         if (leftRightDistinctions === undefined) return false;
         const keysDependencies = this.getKeyDependencies();
-        return leftRightDistinctions.some(splitKey => keysDependencies.has(splitKey)); // TODO: momenteel moeten de keys exact hetzelfde zijn, mss moet er gewoon gecheckt worden of het linkerdeel voor de eerste dubbelpunt matcht?
+        return leftRightDistinctions.some(splitKey => keysDependencies.has(splitKey.split(":")[0])); // TODO: momenteel moeten de keys exact hetzelfde zijn, mss moet er gewoon gecheckt worden of het linkerdeel voor de eerste dubbelpunt matcht?
     }
 
     public makeLeftRight(leftRightDistinctions, side: ("left" | "right")) {

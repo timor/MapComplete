@@ -94,6 +94,11 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
             return splittedKeys.join(":")
         }
 
+        /**
+         * Adds for the keys specified in leftRightDistinctions a left and a right version if not yet specified
+         * e.g. {"sidewalk": "yes"} -> {"sidewalk:left": "yes", "sidewalk:right": "yes"}
+         * @param props Json containing all properties
+         */
         function addLeftRightTags(props: any) {
             const newProps = {...props};
             for (var prop in props) {

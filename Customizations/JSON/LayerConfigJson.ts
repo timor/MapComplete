@@ -297,7 +297,9 @@ export interface LayerConfigJson {
     allowSplit?: boolean
 
     /**
-     * Show :left and :right attributes as two seperate roads on the map. This allows you to edit the :left and :right data seperately.
+     * If set, all specified osm keys will be shown in the infobox as the left- and right version seperately.
+     *
+     * This shows the :left and :right attributes as two seperate roads on the map. This allows you to edit the :left and :right data seperately.
      * Each element here is an osm filter on which to sperate between left and right (e.g. cycleway=track (used in the cycle_infra theme))
      * track
      *
