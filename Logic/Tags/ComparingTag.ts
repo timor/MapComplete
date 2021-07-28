@@ -38,5 +38,15 @@ export default class ComparingTag implements TagsFilter {
     usedKeys(): string[] {
         return [this._key];
     }
-    
+
+    getLeftRightFilter(leftRightDistinctions: string[], side: "left" | "right") {
+        const tags = this._key.split(":")
+        if(leftRightDistinctions.includes(tags[0]) &&
+            !(tags[1] === "left" || tags[1] === "right")) {
+            // append the direction after the first element
+            tags.splice(1, 0, side)
+        }
+        const newKey = tags.join(":");
+        return `${newKey}${this._representation}`
+    }
 }

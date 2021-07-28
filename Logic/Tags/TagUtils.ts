@@ -20,6 +20,59 @@ export class TagUtils {
             properties[tag.key] = tag.value
         }
         return properties;
+    }   
+    
+    private static getSideVersionOfKey(key, side: ("left" | "right" | "both")) {
+        // e.g. for cycleway:surface, this should return cycleway:left:surface
+        const splittedKeys = key.split(":")
+        splittedKeys.splice(1, 0, side)
+        return splittedKeys.join(":")
+    }
+
+    /**
+     * Adds for the keys specified in leftRightDistinctions a left and a right version if not yet specified
+     * e.g. {"sidewalk": "yes"} -> {"sidewalk:left": "yes", "sidewalk:right": "yes"} (if leftRightDistinctions contains 'sidewalk')
+     * @param props Json containing all properties
+     */
+    public static addLeftRightTags(leftRightDistinctions: string[], props: any) {
+        const newProps = {...props};
+        for (var prop in props) {
+            const value = props[prop];
+            const splittedKeys = prop.split(":")
+            if (leftRightDistinctions.includes(splittedKeys[0])) {
+                if (splittedKeys.length >= 2 && splittedKeys[1] in ["left", "right"]) {
+                    // Left and right is already specified here, so skip
+                    
+                } else if (splittedKeys.length >= 2 && splittedKeys[1] === "both") {
+                    // Both is specified, so split this in left and right
+                    const temp = [...splittedKeys];
+
+                    temp[1] = "left"
+                    const leftKey = temp.join(":")
+
+                    temp[1] = "right"
+                    const rightKey = temp.join(":")
+
+                    newProps[leftKey] = value;
+                    newProps[rightKey] = value;
+
+                } else {
+                    // No direction specifier already added, so we kan add our own (if left and right isn't specified yet)
+                    const leftKey =TagUtils. getSideVersionOfKey(prop, "left")
+                    const rightKey =TagUtils.  getSideVersionOfKey(prop, "right")
+
+                    if (!(leftKey in props)) {
+                        newProps[leftKey] = value;
+                    }
+
+                    if (!(rightKey in props)) {
+                        newProps[rightKey] = value;
+                    }
+
+                }
+            }
+        }
+        return newProps;
     }
 
     /**

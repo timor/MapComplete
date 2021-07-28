@@ -17,6 +17,7 @@ import {Utils} from "../../Utils";
 import Title from "../Base/Title";
 import Translations from "../i18n/Translations";
 import SplitRoadWizard from "./SplitRoadWizard";
+import {TagUtils} from "../../Logic/Tags/TagUtils";
 
 export default class FeatureInfoBox extends ScrollableFullScreen {
 
@@ -66,10 +67,9 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
             }
             return new EditableTagRendering(tags, tr, layerConfig.units);
         });
-        
-        let editElements : BaseUIElement[] = []
+
         if (!questionBoxIsUsed) {
-            editElements.push(questionBox);
+            renderings.push(questionBox);
         }
         return renderings;
     }
@@ -84,69 +84,17 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
         const generalTagRenderings = tagRenderings.filter(tagRendering => !(tagRendering.shouldSplit(leftRightDistinctions)))
         const splittedTagRenderings = tagRenderings.filter(tagRendering => tagRendering.shouldSplit(leftRightDistinctions))
 
-        const leftTagRenderings = splittedTagRenderings.map(tagRendering => tagRendering.makeLeftRight(leftRightDistinctions,"left"))
+        const leftTagRenderings = splittedTagRenderings.map(tagRendering => tagRendering.makeLeftRight(leftRightDistinctions, "left"))
         const rightTagRenderings = splittedTagRenderings.map(tagRendering => tagRendering.makeLeftRight(leftRightDistinctions, "right"))
 
         const leftRightDistinct = leftTagRenderings.length != 0 || rightTagRenderings.length != 0;
 
-        function getSideVersionOfKey(key, side: ("left" | "right" | "both")) {
-            // e.g. for cycleway:surface, this should return cycleway:left:surface
-            const splittedKeys = key.split(":")
-            splittedKeys.splice(1, 0, side)
-            return splittedKeys.join(":")
-        }
 
-        /**
-         * Adds for the keys specified in leftRightDistinctions a left and a right version if not yet specified
-         * e.g. {"sidewalk": "yes"} -> {"sidewalk:left": "yes", "sidewalk:right": "yes"}
-         * @param props Json containing all properties
-         */
-        function addLeftRightTags(props: any) {
-            const newProps = {...props};
-            for (var prop in props) {
-                const value = props[prop];
-                const splittedKeys = prop.split(":")
-                if (leftRightDistinctions.includes(splittedKeys[0])) {
-                    if (splittedKeys.length >= 2 && splittedKeys[1] in ["left", "right"]) {
-                        // Left and right is already specified here, so skip
-                        continue;
-                    } else if (splittedKeys.length >= 2 && splittedKeys[1] === "both") {
-                        // Both is specified, so split this in left and right
-                        const temp = [...splittedKeys];
 
-                        temp[1] = "left"
-                        const leftKey = temp.join(":")
+        // Answers must be splitted to left and right, if e.g. only the :both attribute exists we already split those
+        const expandedTags = tags.map(tag => TagUtils. addLeftRightTags(leftRightDistinctions, tag))
 
-                        temp[1] = "right"
-                        const rightKey = temp.join(":")
-
-                        newProps[leftKey] = value;
-                        newProps[rightKey] = value;
-
-                        continue;
-                    } else {
-                        // No direction specifier already added, so we kan add our own (if left and right isn't specified yet)
-                        const leftKey = getSideVersionOfKey(prop, "left")
-                        const rightKey = getSideVersionOfKey(prop, "right")
-
-                        if (!(leftKey in props)){
-                            newProps[leftKey] = value;
-                        }
-
-                        if (!(rightKey in props)){
-                            newProps[rightKey] = value;
-                        }
-
-                    }
-                }
-            }
-            return newProps;
-        }
-
-        // Answers must be splitted to left and right, if e.g. only the :both attribute exists
-        const expandedTags = tags.map(tag => addLeftRightTags(tag))
-
-        function getMapAndQuestions(tags: UIEventSource<any>, layerConfig: LayerConfig, tagRenderings, options? : {left? : boolean, right? : boolean}){
+        function getMapAndQuestions(tags: UIEventSource<any>, layerConfig: LayerConfig, tagRenderings, options?: { left?: boolean, right?: boolean, noMiniMap?: boolean }) {
 
             const defaults = {left: false, right: false};
             options = Utils.setDefaults(options, defaults);
@@ -157,40 +105,43 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
 
             const renderings = FeatureInfoBox.getQuestionBox(tags, layerConfig, tagRenderings);
 
-            function getMinimap(left = false, right = false) {
-                let mapType = left? "minimap_left" : right? "minimap_right" : "minimap";
-                return new TagRenderingAnswer(tags, SharedTagRenderings.SharedTagRendering.get(mapType))
-            }
-
-            const hasMinimap = layerConfig.tagRenderings.some(tr => tr.hasMinimap())
+            const hasMinimap = layerConfig.tagRenderings.some(tr => tr.hasMinimap()) || options.noMiniMap
             if (!hasMinimap) {
-                renderings.push(getMinimap(options.left, options.right));
+                const mapType = options.left ? "minimap_left" : options.right ? "minimap_right" : "minimap";
+                const minimap = new TagRenderingAnswer(tags, SharedTagRenderings.SharedTagRendering.get(mapType))
+                if (options.left || options.right) {
+                    minimap.SetClass("sticky top-0")
+                    renderings.unshift(minimap)
+                } else {
+                    renderings.push(minimap);
+                }
             }
 
             return renderings;
         }
 
-        let renderings;
+        let renderings : BaseUIElement[];
         if (!leftRightDistinct) {
             renderings = getMapAndQuestions(tags, layerConfig, tagRenderings);
         } else {
             const generalTitle = new Title(Translations.t.roadside.general.Clone());
-            const generalMapQuestions = getMapAndQuestions(tags, layerConfig, generalTagRenderings);
+            const generalMapQuestions = getMapAndQuestions(tags, layerConfig, generalTagRenderings, {noMiniMap: true});
             generalMapQuestions.unshift(generalTitle)
 
             const leftTitle = new Title(Translations.t.roadside.left.Clone())
             const leftMapQuestions = getMapAndQuestions(expandedTags, layerConfig, leftTagRenderings, {left: true});
-            leftMapQuestions.unshift(leftTitle)
+            leftMapQuestions.splice(1,0,leftTitle)
 
             const rightTitle = new Title(Translations.t.roadside.right.Clone())
             const rightMapQuestions = getMapAndQuestions(expandedTags, layerConfig, rightTagRenderings, {right: true});
-            rightMapQuestions.unshift(rightTitle)
+            rightMapQuestions.splice(1,0,rightTitle)
 
-            renderings = generalMapQuestions.concat(leftMapQuestions, rightMapQuestions)
+            generalMapQuestions.push(new Combine(leftMapQuestions), new Combine(rightMapQuestions))
+            renderings = generalMapQuestions
         }
 
 
-        const editElements : BaseUIElement[] = []
+        const editElements: BaseUIElement[] = []
         if (layerConfig.deletion) {
             editElements.push(
                 new VariableUiElement(tags.map(tags => tags.id).map(id =>
@@ -207,13 +158,7 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
                     new SplitRoadWizard(id))
                 ))
         }
-
-
-        const hasMinimap = layerConfig.tagRenderings.some(tr => tr.hasMinimap())
-        if (!hasMinimap) {
-            renderings.push(new TagRenderingAnswer(tags, SharedTagRenderings.SharedTagRendering.get("minimap")))
-        }
-
+        
         editElements.push(
             new VariableUiElement(
                 State.state.osmConnection.userDetails
@@ -242,10 +187,10 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
                 })
             )
         )
-        
+
         const editors = new VariableUiElement(State.state.featureSwitchUserbadge.map(
             userbadge => {
-                if(!userbadge){
+                if (!userbadge) {
                     return undefined
                 }
                 return new Combine(editElements)
