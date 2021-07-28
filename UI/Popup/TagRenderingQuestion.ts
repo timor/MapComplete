@@ -25,6 +25,7 @@ import BaseUIElement from "../BaseUIElement";
 import {DropDown} from "../Input/DropDown";
 import {Unit} from "../../Customizations/JSON/Denomination";
 import InputElementWrapper from "../Input/InputElementWrapper";
+import ChangeTagAction from "../../Logic/Osm/Actions/ChangeTagAction";
 
 /**
  * Shows the question element.
@@ -57,7 +58,9 @@ export default class TagRenderingQuestion extends Combine {
             const selection = inputElement.GetValue().data;
             if (selection) {
                 (State.state?.changes ?? new Changes())
-                    .addTag(tags.data.id, selection, tags);
+                    .applyAction(new ChangeTagAction(
+                        tags.data.id, selection, tags.data
+                    ))
             }
 
             if (options.afterSave) {
@@ -165,7 +168,7 @@ export default class TagRenderingQuestion extends Combine {
         if (configuration.multiAnswer) {
             return TagRenderingQuestion.GenerateMultiAnswer(configuration, inputEls, ff, configuration.mappings.map(mp => mp.ifnot))
         } else {
-            return new RadioButton(inputEls, false)
+            return new RadioButton(inputEls, {selectFirstAsDefault: false})
         }
 
     }
@@ -196,9 +199,7 @@ export default class TagRenderingQuestion extends Combine {
                     oppositeTags.push(notSelected);
                 }
                 tags.push(TagUtils.FlattenMultiAnswer(oppositeTags));
-                const actualTags = TagUtils.FlattenMultiAnswer(tags);
-                console.log("Converted ", indices.join(","), "into", actualTags.asHumanString(false, false, {}), "with elems", elements)
-                return actualTags;
+                return TagUtils.FlattenMultiAnswer(tags);
             },
             (tags: TagsFilter) => {
                 // {key --> values[]}
@@ -331,12 +332,15 @@ export default class TagRenderingQuestion extends Combine {
         }
 
         const tagsData = tags.data;
+        const feature = State.state.allElements.ContainingFeatures.get(tagsData.id)
         const input: InputElement<string> = ValidatedTextField.InputForType(configuration.freeform.type, {
             isValid: (str) => (str.length <= 255),
             country: () => tagsData._country,
             location: [tagsData._lat, tagsData._lon],
             mapBackgroundLayer: State.state.backgroundLayer,
-            unit: applicableUnit
+            unit: applicableUnit,
+            args: configuration.freeform.helperArgs,
+            feature: feature
         });
 
         input.GetValue().setData(tagsData[freeform.key] ?? freeform.default);

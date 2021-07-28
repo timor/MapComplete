@@ -39,7 +39,8 @@ export default class SpecialVisualizations {
     static constructMiniMap: (options?: {
         background?: UIEventSource<BaseLayer>,
         location?: UIEventSource<Loc>,
-        allowMoving?: boolean
+        allowMoving?: boolean,
+        leafletOptions?: any
     }) => BaseUIElement;
     static constructShowDataLayer: (features: UIEventSource<{ feature: any; freshness: Date }[]>, leafletMap: UIEventSource<any>, layoutToUse: UIEventSource<any>, enablePopups?: boolean, zoomToFeatures?: boolean, options? : {left?: boolean, right?: boolean}) => any;
     public static specialVisualizations: SpecialVisualization[] =
@@ -55,9 +56,12 @@ export default class SpecialVisualizations {
                             if (!tags.hasOwnProperty(key)) {
                                 continue;
                             }
-                            parts.push(key + "=" + tags[key]);
+                            parts.push([key , tags[key] ?? "<b>undefined</b>" ]);
                         }
-                        return parts.join("<br/>")
+                        return new Table(
+                            ["key","value"],
+                            parts
+                        )
                     })).SetStyle("border: 1px solid black; border-radius: 1em;padding:1em;display:block;")
                 })
             },
@@ -131,6 +135,7 @@ export default class SpecialVisualizations {
                                 // This is a list of values
                                 idList = JSON.parse(value)
                             }
+                            
                             for (const id of idList) {
                                 features.push({
                                     freshness: new Date(),

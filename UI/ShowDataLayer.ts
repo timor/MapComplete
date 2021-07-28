@@ -16,10 +16,9 @@ export default class ShowDataLayer {
     private readonly _leafletMap: UIEventSource<L.Map>;
     private _cleanCount = 0;
     private readonly _enablePopups: boolean;
-    private readonly _features: UIEventSource<{ feature: any, freshness: Date }[]>;
-    private readonly _options;
+    private readonly _features: UIEventSource<{ feature: any}[]>
 
-    constructor(features: UIEventSource<{ feature: any, freshness: Date }[]>,
+    constructor(features: UIEventSource<{ feature: any}[]>,
                 leafletMap: UIEventSource<L.Map>,
                 layoutToUse: UIEventSource<LayoutConfig>,
                 enablePopups = true,
@@ -92,12 +91,14 @@ export default class ShowDataLayer {
                         color: options.left? mainColor : otherColor,
                         opacity: opacity,
                         weight: leftWeight,
+                    // @ts-ignore
                         offset: -offset // TODO: is negative offset actually the left side?
                     });
                     const rightLine = L.polyline(newCoords, {
                         color: options.right? mainColor : otherColor,
                         opacity: opacity,
                         weight: rightWeight,
+                    // @ts-ignore
                         offset: offset
                     });
                     leftLine.addTo(geoLayer);
@@ -123,9 +124,7 @@ export default class ShowDataLayer {
                     console.error(e)
                 }
             }
-
-
-            State.state.selectedElement.ping();
+            State.state.selectedElement.ping()
         }
 
         features.addCallback(() => update());
@@ -169,6 +168,7 @@ export default class ShowDataLayer {
             })
         });
     }
+
     private postProcessFeature(feature, leafletLayer: L.Layer) {
         const layer: LayerConfig = this._layerDict[feature._matching_layer_id];
         if (layer === undefined) {
@@ -198,7 +198,7 @@ export default class ShowDataLayer {
 
         leafletLayer.on("popupopen", () => {
             State.state.selectedElement.setData(feature)
-           
+
             if (infobox === undefined) {
                 const tags = State.state.allElements.getEventSourceById(feature.properties.id);
                 infobox = new FeatureInfoBox(tags, layer); // Arnodeceuninck
@@ -213,7 +213,7 @@ export default class ShowDataLayer {
 
 
             infobox.AttachTo(id)
-            infobox.Activate(); 
+            infobox.Activate();
         });
         const self = this;
         State.state.selectedElement.addCallbackAndRunD(selected => {
@@ -226,10 +226,12 @@ export default class ShowDataLayer {
             if (selected.properties.id === feature.properties.id) {
                 // A small sanity check to prevent infinite loops:
                 if (selected.geometry.type === feature.geometry.type  // If a feature is rendered both as way and as point, opening one popup might trigger the other to open, which might trigger the one to open again
-
-                    &&                     feature.id === feature.properties.id // the feature might have as id 'node/-1' and as 'feature.properties.id' = 'the newly assigned id'. That is no good too
-                     ) {
+                    && feature.id === feature.properties.id // the feature might have as id 'node/-1' and as 'feature.properties.id' = 'the newly assigned id'. That is no good too
+                ) {
                     leafletLayer.openPopup()
+                }
+                if(feature.id !== feature.properties.id){
+                    console.trace("Not opening the popup for", feature)
                 }
 
             }

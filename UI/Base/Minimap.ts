@@ -6,6 +6,7 @@ import BaseLayer from "../../Models/BaseLayer";
 import AvailableBaseLayers from "../../Logic/Actors/AvailableBaseLayers";
 import {Map} from "leaflet";
 import 'leaflet-polylineoffset';
+import {Utils} from "../../Utils";
 
 export default class Minimap extends BaseUIElement {
 
@@ -16,11 +17,15 @@ export default class Minimap extends BaseUIElement {
     private readonly _location: UIEventSource<Loc>;
     private _isInited = false;
     private _allowMoving: boolean;
+    private readonly _leafletoptions: any;
+    private readonly _onFullyLoaded: (leaflet: L.Map) => void
 
     constructor(options?: {
                     background?: UIEventSource<BaseLayer>,
                     location?: UIEventSource<Loc>,
-                    allowMoving?: boolean
+                    allowMoving?: boolean,
+                    leafletOptions?: any,
+                    onFullyLoaded?: (leaflet: L.Map) => void
                 }
     ) {
         super()
@@ -29,10 +34,12 @@ export default class Minimap extends BaseUIElement {
         this._location = options?.location ?? new UIEventSource<Loc>({lat: 0, lon: 0, zoom: 1})
         this._id = "minimap" + Minimap._nextId;
         this._allowMoving = options.allowMoving ?? true;
+        this._leafletoptions = options.leafletOptions ?? {}
+        this._onFullyLoaded = options.onFullyLoaded
         Minimap._nextId++
 
     }
-    
+
     protected InnerConstructElement(): HTMLElement {
         const div = document.createElement("div")
         div.id = this._id;
@@ -40,6 +47,7 @@ export default class Minimap extends BaseUIElement {
         div.style.width = "100%"
         div.style.minWidth = "40px"
         div.style.minHeight = "40px"
+        div.style.position = "relative"
         const wrapper = document.createElement("div")
         wrapper.appendChild(div)
         const self = this;
@@ -53,7 +61,7 @@ export default class Minimap extends BaseUIElement {
         return wrapper;
 
     }
-    
+
     private InitMap() {
         if (this._constructedHtmlElement === undefined) {
             // This element isn't initialized yet
@@ -70,10 +78,10 @@ export default class Minimap extends BaseUIElement {
         }
         this._isInited = true;
         const location = this._location;
-
+        const self = this;
         let currentLayer = this._background.data.layer()
-        const map = L.map(this._id, {
-            center: [location.data?.lat ?? 0, location.data?.lon ?? 0],
+        const options = {
+            center: <[number, number]>[location.data?.lat ?? 0, location.data?.lon ?? 0],
             zoom: location.data?.zoom ?? 2,
             layers: [currentLayer],
             zoomControl: false,
@@ -83,9 +91,20 @@ export default class Minimap extends BaseUIElement {
             doubleClickZoom: this._allowMoving,
             keyboard: this._allowMoving,
             touchZoom: this._allowMoving,
-          // Disabling this breaks the geojson layer - don't ask me why!  zoomAnimation: this._allowMoving,
+            // Disabling this breaks the geojson layer - don't ask me why!  zoomAnimation: this._allowMoving,
             fadeAnimation: this._allowMoving
-        });
+        }
+
+        Utils.Merge(this._leafletoptions, options)
+
+        const map = L.map(this._id, options);
+        if (self._onFullyLoaded !== undefined) {
+
+            currentLayer.on("load", () => {
+                console.log("Fully loaded all tiles!")
+                self._onFullyLoaded(map)
+            })
+        }
 
         map.setMaxBounds(
             [[-100, -200], [100, 200]]
@@ -97,6 +116,13 @@ export default class Minimap extends BaseUIElement {
                 map.removeLayer(currentLayer);
             }
             currentLayer = newLayer;
+            if (self._onFullyLoaded !== undefined) {
+
+                currentLayer.on("load", () => {
+                    console.log("Fully loaded all tiles!")
+                    self._onFullyLoaded(map)
+                })
+            }
             map.addLayer(newLayer);
         })
 

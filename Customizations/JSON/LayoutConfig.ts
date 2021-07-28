@@ -43,6 +43,8 @@ export default class LayoutConfig {
     public readonly enableBackgroundLayerSelection: boolean;
     public readonly enableShowAllQuestions: boolean;
     public readonly enableExportButton: boolean;
+    public readonly enablePdfDownload: boolean;
+
     public readonly customCss?: string;
     /*
     How long is the cache valid, in seconds?
@@ -66,7 +68,7 @@ export default class LayoutConfig {
             this.language = json.language;
         }
         if (this.language.length == 0) {
-            throw "No languages defined. Define at least one language"
+            throw `No languages defined. Define at least one language. (${context}.languages)`
         }
         if (json.title === undefined) {
             throw "Title not defined in " + this.id;
@@ -95,7 +97,7 @@ export default class LayoutConfig {
             }
         );
         this.defaultBackgroundId = json.defaultBackgroundId;
-        this.layers = LayoutConfig.ExtractLayers(json, this.units, official);
+        this.layers = LayoutConfig.ExtractLayers(json, this.units, official, context);
 
         // ALl the layers are constructed, let them share tags in now!
         const roaming: { r, source: LayerConfig }[] = []
@@ -153,19 +155,20 @@ export default class LayoutConfig {
         this.enableAddNewPoints = json.enableAddNewPoints ?? true;
         this.enableBackgroundLayerSelection = json.enableBackgroundLayerSelection ?? true;
         this.enableShowAllQuestions = json.enableShowAllQuestions ?? false;
-        this.enableExportButton = json.enableExportButton ?? false;
+        this.enableExportButton = json.enableDownload ?? false;
+        this.enablePdfDownload = json.enablePdfDownload ?? false;
         this.customCss = json.customCss;
         this.cacheTimeout = json.cacheTimout ?? (60 * 24 * 60 * 60)
 
 
     }
 
-    private static ExtractLayers(json: LayoutConfigJson, units: Unit[], official: boolean): LayerConfig[] {
+    private static ExtractLayers(json: LayoutConfigJson, units: Unit[], official: boolean, context: string): LayerConfig[] {
         const result: LayerConfig[] = []
 
         json.layers.forEach((layer, i) => {
             if (typeof layer === "string") {
-                if (AllKnownLayers.sharedLayersJson[layer] !== undefined) {
+                if (AllKnownLayers.sharedLayersJson.get(layer) !== undefined) {
                     if (json.overrideAll !== undefined) {
                         let lyr = JSON.parse(JSON.stringify(AllKnownLayers.sharedLayersJson[layer]));
                         const newLayer = new LayerConfig(Utils.Merge(json.overrideAll, lyr), units, `${json.id}+overrideAll.layers[${i}]`, official)
@@ -176,7 +179,8 @@ export default class LayoutConfig {
                         return
                     }
                 } else {
-                    throw "Unknown fixed layer " + layer;
+                    console.log("Layer ", layer, " not kown, try one of", Array.from(AllKnownLayers.sharedLayers.keys()).join(", "))
+                    throw `Unknown builtin layer ${layer} at ${context}.layers[${i}]`;
                 }
             }
 
@@ -195,9 +199,9 @@ export default class LayoutConfig {
                 names = [names]
             }
             names.forEach(name => {
-                const shared = AllKnownLayers.sharedLayersJson[name];
+                const shared = AllKnownLayers.sharedLayersJson.get(name);
                 if (shared === undefined) {
-                    throw "Unknown fixed layer " + name;
+                    throw `Unknown shared/builtin layer ${name} at ${context}.layers[${i}]. Available layers are ${Array.from(AllKnownLayers.sharedLayersJson.keys()).join(", ")}`;
                 }
                 // @ts-ignore
                 let newLayer: LayerConfigJson = Utils.Merge(layer.override, JSON.parse(JSON.stringify(shared))); // We make a deep copy of the shared layer, in order to protect it from changes

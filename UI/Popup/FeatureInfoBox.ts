@@ -14,9 +14,9 @@ import BaseUIElement from "../BaseUIElement";
 import {VariableUiElement} from "../Base/VariableUIElement";
 import DeleteWizard from "./DeleteWizard";
 import {Utils} from "../../Utils";
-import {tag} from "@turf/turf";
 import Title from "../Base/Title";
 import Translations from "../i18n/Translations";
+import SplitRoadWizard from "./SplitRoadWizard";
 
 export default class FeatureInfoBox extends ScrollableFullScreen {
 
@@ -66,8 +66,10 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
             }
             return new EditableTagRendering(tags, tr, layerConfig.units);
         });
+        
+        let editElements : BaseUIElement[] = []
         if (!questionBoxIsUsed) {
-            renderings.push(questionBox);
+            editElements.push(questionBox);
         }
         return renderings;
     }
@@ -188,8 +190,9 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
         }
 
 
+        const editElements : BaseUIElement[] = []
         if (layerConfig.deletion) {
-            renderings.push(
+            editElements.push(
                 new VariableUiElement(tags.map(tags => tags.id).map(id =>
                     new DeleteWizard(
                         id,
@@ -198,7 +201,20 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
                 ))
         }
 
-        renderings.push(
+        if (layerConfig.allowSplit) {
+            editElements.push(
+                new VariableUiElement(tags.map(tags => tags.id).map(id =>
+                    new SplitRoadWizard(id))
+                ))
+        }
+
+
+        const hasMinimap = layerConfig.tagRenderings.some(tr => tr.hasMinimap())
+        if (!hasMinimap) {
+            renderings.push(new TagRenderingAnswer(tags, SharedTagRenderings.SharedTagRendering.get("minimap")))
+        }
+
+        editElements.push(
             new VariableUiElement(
                 State.state.osmConnection.userDetails
                     .map(ud => ud.csCount)
@@ -216,7 +232,7 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
         )
 
 
-        renderings.push(
+        editElements.push(
             new VariableUiElement(
                 State.state.featureSwitchIsDebugging.map(isDebugging => {
                     if (isDebugging) {
@@ -226,6 +242,16 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
                 })
             )
         )
+        
+        const editors = new VariableUiElement(State.state.featureSwitchUserbadge.map(
+            userbadge => {
+                if(!userbadge){
+                    return undefined
+                }
+                return new Combine(editElements)
+            }
+        ))
+        renderings.push(editors)
 
         return new Combine(renderings).SetClass("block")
 

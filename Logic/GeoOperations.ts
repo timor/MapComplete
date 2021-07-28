@@ -6,11 +6,14 @@ export class GeoOperations {
         return turf.area(feature);
     }
 
+    /**
+     * Converts a GeoJSon feature to a point feature
+     * @param feature
+     */
     static centerpoint(feature: any) {
         const newFeature = turf.center(feature);
         newFeature.properties = feature.properties;
         newFeature.id = feature.id;
-
         return newFeature;
     }
 
@@ -273,10 +276,65 @@ export class GeoOperations {
         }
         return undefined;
     }
+
+    /**
+     * Generates the closest point on a way from a given point
+     * @param way The road on which you want to find a point
+     * @param point Point defined as [lon, lat]
+     */
+    public static nearestPoint(way, point: [number, number]) {
+        return turf.nearestPointOnLine(way, point, {units: "kilometers"});
+    }
+
+    public static toCSV(features: any[]): string {
+
+        const headerValuesSeen = new Set<string>();
+        const headerValuesOrdered: string[] = []
+
+        function addH(key) {
+            if (!headerValuesSeen.has(key)) {
+                headerValuesSeen.add(key)
+                headerValuesOrdered.push(key)
+            }
+        }
+
+        addH("_lat")
+        addH("_lon")
+
+        const lines: string[] = []
+
+        for (const feature of features) {
+            const properties = feature.properties;
+            for (const key in properties) {
+                if (!properties.hasOwnProperty(key)) {
+                    continue;
+                }
+                addH(key)
+
+            }
+        }
+        headerValuesOrdered.sort()
+        for (const feature of features) {
+            const properties = feature.properties;
+            let line = ""
+            for (const key of headerValuesOrdered) {
+                const value = properties[key]
+                if (value === undefined) {
+                    line += ","
+                } else {
+                    line += JSON.stringify(value) + ","
+                }
+            }
+            lines.push(line)
+        }
+
+        return headerValuesOrdered.map(v => JSON.stringify(v)).join(",") + "\n" + lines.join("\n")
+    }
+
 }
 
 
-class BBox {
+export class BBox {
 
     readonly maxLat: number;
     readonly maxLon: number;
@@ -299,33 +357,20 @@ class BBox {
         this.check();
     }
 
+    static fromLeafletBounds(bounds) {
+        return new BBox([[bounds.getWest(), bounds.getNorth()], [bounds.getEast(), bounds.getSouth()]])
+    }
+
     static get(feature) {
         if (feature.bbox?.overlapsWith === undefined) {
-
-            if (feature.geometry.type === "MultiPolygon") {
-                let coordinates = [];
-                for (const coorlist of feature.geometry.coordinates) {
-                    coordinates = coordinates.concat(coorlist[0]);
-                }
-                feature.bbox = new BBox(coordinates);
-            } else if (feature.geometry.type === "Polygon") {
-                feature.bbox = new BBox(feature.geometry.coordinates[0]);
-            } else if (feature.geometry.type === "LineString") {
-                feature.bbox = new BBox(feature.geometry.coordinates);
-            } else if (feature.geometry.type === "Point") {
-                // Point
-                feature.bbox = new BBox([feature.geometry.coordinates]);
-            } else {
-                throw "Cannot calculate bbox, unknown type " + feature.geometry.type;
-            }
+            const turfBbox: number[] = turf.bbox(feature)
+            feature.bbox = new BBox([[turfBbox[0], turfBbox[1]],[turfBbox[2], turfBbox[3]]]);
         }
 
         return feature.bbox;
     }
 
     public overlapsWith(other: BBox) {
-        this.check();
-        other.check();
         if (this.maxLon < other.minLon) {
             return false;
         }
@@ -337,6 +382,22 @@ class BBox {
         }
         return this.minLat <= other.maxLat;
 
+    }
+
+    public isContainedIn(other: BBox) {
+        if (this.maxLon > other.maxLon) {
+            return false;
+        }
+        if (this.maxLat > other.maxLat) {
+            return false;
+        }
+        if (this.minLon < other.minLon) {
+            return false;
+        }
+        if (this.minLat < other.minLat) {
+            return false
+        }
+        return true;
     }
 
     private check() {
