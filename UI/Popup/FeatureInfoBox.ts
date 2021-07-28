@@ -167,16 +167,15 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
         if (!leftRightDistinct) {
             renderings = getMapAndQuestions(tags, layerConfig, tagRenderings);
         } else {
-            // TODO: Why won't the translations work? :(
-            const generalTitle = new Title(Translations.t.roadside.general);
+            const generalTitle = new Title(Translations.t.roadside.general.Clone());
             const generalMapQuestions = getMapAndQuestions(tags, layerConfig, generalTagRenderings);
             generalMapQuestions.unshift(generalTitle)
 
-            const leftTitle = new Title(Translations.t.roadside.left)
+            const leftTitle = new Title(Translations.t.roadside.left.Clone())
             const leftMapQuestions = getMapAndQuestions(expandedTags, layerConfig, leftTagRenderings, {left: true});
             leftMapQuestions.unshift(leftTitle)
 
-            const rightTitle = new Title(Translations.t.roadside.right)
+            const rightTitle = new Title(Translations.t.roadside.right.Clone())
             const rightMapQuestions = getMapAndQuestions(expandedTags, layerConfig, rightTagRenderings, {right: true});
             rightMapQuestions.unshift(rightTitle)
 
