@@ -78,8 +78,7 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
         const tagRenderings = layerConfig.tagRenderings;
 
         // Some questions are general, some must be asked seperately on the left side of the road and on the right side of the road
-        const leftRightDistinctions = layerConfig.leftRightDistinctions;
-        console.log("Arggggghhh", tags)
+        const leftRightDistinctions: string[] = layerConfig.leftRightDistinctions;
         const generalTagRenderings = tagRenderings.filter(tagRendering => !(tagRendering.shouldSplit(leftRightDistinctions)))
         const splittedTagRenderings = tagRenderings.filter(tagRendering => tagRendering.shouldSplit(leftRightDistinctions))
 
@@ -87,6 +86,59 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
         const rightTagRenderings = splittedTagRenderings.map(tagRendering => tagRendering.makeLeftRight(leftRightDistinctions, "right"))
 
         const leftRightDistinct = leftTagRenderings.length != 0 || rightTagRenderings.length != 0;
+
+        function getSideVersionOfKey(key, side: ("left" | "right" | "both")) {
+            // e.g. for cycleway:surface, this should return cycleway:left:surface
+            const splittedKeys = key.split(":")
+            splittedKeys.splice(1, 0, side)
+            return splittedKeys.join(":")
+        }
+
+        function addLeftRightTags(props: any) {
+            const newProps = {...props};
+            for (var prop in props) {
+                const value = props[prop];
+                const splittedKeys = prop.split(":")
+                if (leftRightDistinctions.includes(splittedKeys[0])) {
+                    if (splittedKeys.length >= 2 && splittedKeys[1] in ["left", "right"]) {
+                        // Left and right is already specified here, so skip
+                        continue;
+                    } else if (splittedKeys.length >= 2 && splittedKeys[1] === "both") {
+                        // Both is specified, so split this in left and right
+                        const temp = [...splittedKeys];
+
+                        temp[1] = "left"
+                        const leftKey = temp.join(":")
+
+                        temp[1] = "right"
+                        const rightKey = temp.join(":")
+
+                        newProps[leftKey] = value;
+                        newProps[rightKey] = value;
+
+                        continue;
+                    } else {
+                        // No direction specifier already added, so we kan add our own (if left and right isn't specified yet)
+                        const leftKey = getSideVersionOfKey(prop, "left")
+                        const rightKey = getSideVersionOfKey(prop, "right")
+
+                        if (!(leftKey in props)){
+                            newProps[leftKey] = value;
+                        }
+
+                        if (!(rightKey in props)){
+                            newProps[rightKey] = value;
+                        }
+
+                    }
+                }
+            }
+            return newProps;
+        }
+
+        // Answers must be splitted to left and right, if e.g. only the :both attribute exists
+        const expandedTags = tags.map(tag => addLeftRightTags(tag))
+
         function getMapAndQuestions(tags: UIEventSource<any>, layerConfig: LayerConfig, tagRenderings, options? : {left? : boolean, right? : boolean}){
 
             const defaults = {left: false, right: false};
@@ -121,11 +173,11 @@ export default class FeatureInfoBox extends ScrollableFullScreen {
             generalMapQuestions.unshift(generalTitle)
 
             const leftTitle = new Title(Translations.t.roadside.left)
-            const leftMapQuestions = getMapAndQuestions(tags, layerConfig, leftTagRenderings, {left: true});
+            const leftMapQuestions = getMapAndQuestions(expandedTags, layerConfig, leftTagRenderings, {left: true});
             leftMapQuestions.unshift(leftTitle)
 
             const rightTitle = new Title(Translations.t.roadside.right)
-            const rightMapQuestions = getMapAndQuestions(tags, layerConfig, rightTagRenderings, {right: true});
+            const rightMapQuestions = getMapAndQuestions(expandedTags, layerConfig, rightTagRenderings, {right: true});
             rightMapQuestions.unshift(rightTitle)
 
             renderings = generalMapQuestions.concat(leftMapQuestions, rightMapQuestions)
