@@ -1,0 +1,28 @@
+{
+  "id": "inline_skating",
+  "title": {
+    "en": "Inline Skating Infrastructure"
+  },
+  "shortDescription": {
+      "en": "A map where you can view and edit things related to inline skating."
+  },
+  "description": {
+      "en": "A map where you can view and edit things related to inline skating."
+  },
+  "language": [
+    "en"
+  ],
+  "maintainer": "MapComplete",
+  "defaultBackgroundId": "CartoDB.Voyager",
+  "icon": "./assets/themes/cycle_infra/cycle-infra.svg",
+  "version": "0",
+  "startLat": 51,
+  "startLon": 3.75,
+  "startZoom": 11,
+  "widenFactor": 0.05,
+  "socialImage": "./assets/themes/cycle_infra/cycle-infra.svg",
+  "enableDownload": true,
+  "layers": [
+      "sidewalks"
+  ]
+}
