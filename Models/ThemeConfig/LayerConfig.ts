@@ -46,6 +46,9 @@ export default class LayerConfig {
     width: TagRenderingConfig;
     dashArray: TagRenderingConfig;
     wayHandling: number;
+    showArrows: boolean;
+    leftOffsetColor: TagRenderingConfig;
+    rightOffsetColor: TagRenderingConfig;
     public readonly units: Unit[];
     public readonly deletion: DeleteConfig | null;
     public readonly allowSplit: boolean
@@ -142,6 +145,7 @@ export default class LayerConfig {
         this.minzoom = json.minzoom ?? 0;
         this.minzoomVisible = json.minzoomVisible ?? this.minzoom;
         this.wayHandling = json.wayHandling ?? 0;
+        this.showArrows = json.showArrows ?? false;
         this.presets = (json.presets ?? []).map((pr, i) => {
 
             let preciseInput = undefined;
@@ -317,6 +321,8 @@ export default class LayerConfig {
         this.iconSize = tr("iconSize", "40,40,center");
         this.label = tr("label", "");
         this.color = tr("color", "#0000ff");
+        this.leftOffsetColor = tr("leftOffsetColor", undefined)
+        this.rightOffsetColor = tr("rightOffsetColor", undefined)
         this.width = tr("width", "7");
         this.rotation = tr("rotation", "0");
         this.dashArray = tr("dashArray", "");
@@ -391,6 +397,7 @@ export default class LayerConfig {
         };
     }
 
+    // This would be the place to hook in left/right sub-styles?
     public GenerateLeafletStyle(
         tags: UIEventSource<any>,
         clickable: boolean
@@ -569,6 +576,49 @@ export default class LayerConfig {
             weight: weight,
             dashArray: dashArray,
         };
+    }
+
+    // Evil code duplication from above.  Anyone knows some typescript mayhap?
+    public GenerateLeafletSubstyle(
+        tags: UIEventSource<any>,
+        colorRendering
+    ): {
+        color: string;
+    } {
+
+        function render(tr: TagRenderingConfig, deflt?: string) {
+            if (tags === undefined) {
+                return deflt
+            }
+            const str = tr?.GetRenderValue(tags.data)?.txt ?? deflt;
+            return Utils.SubstituteKeys(str, tags.data).replace(/{.*}/g, "");
+        }
+
+        function rendernum(tr: TagRenderingConfig, deflt: number) {
+            const str = Number(render(tr, "" + deflt));
+            const n = Number(str);
+            if (isNaN(n)) {
+                return deflt;
+            }
+            return n;
+        }
+
+        let color = render(colorRendering, "#00f");
+        if (color.startsWith("--")) {
+            color = getComputedStyle(document.body).getPropertyValue(
+                "--catch-detail-color"
+            );
+        }
+
+        // const dashArray = render(sub.dashArray)?.split(" ")?.map(Number);
+        // const weight = rendernum(sub.width, 5);
+
+        return {
+            color: color
+            // weight: weight,
+            // dashArray: dashArray,
+        };
+
     }
 
     public ExtractImages(): Set<string> {

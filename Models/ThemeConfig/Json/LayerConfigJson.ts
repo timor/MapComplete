@@ -168,6 +168,19 @@ export interface LayerConfigJson {
      */
     width?: string | TagRenderingConfigJson;
 
+    showArrows?: boolean;
+
+    leftOffsetColor?: string | TagRenderingConfigJson;
+    rightOffsetColor?: string | TagRenderingConfigJson;
+    // rightOffset?: any;
+    // {amount?: number; options: any;}
+    // {
+    //     amount?: number;
+    //     color?: string | TagRenderingConfigJson;
+    //     width?: string | TagRenderingConfigJson;
+    //     dashArray?: string | TagRenderingConfigJson;
+    // };
+
     /**
      * A dasharray, e.g. "5 6"
      * The dasharray defines 'pixels of line, pixels of gap, pixels of line, pixels of gap',

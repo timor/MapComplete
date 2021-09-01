@@ -4,6 +4,8 @@
 import {UIEventSource} from "../Logic/UIEventSource";
 import * as L from "leaflet"
 import "leaflet.markercluster"
+import "leaflet-polylineoffset"
+import "leaflet-textpath"
 import State from "../State";
 import FeatureInfoBox from "./Popup/FeatureInfoBox";
 import LayoutConfig from "../Models/ThemeConfig/LayoutConfig";
@@ -103,6 +105,13 @@ export default class ShowDataLayer {
         return layer?.GenerateLeafletStyle(tagsSource, layer._showOnPopup !== undefined);
     }
 
+    private createOffsetStyleFor(feature,offsetColor) {
+        const tagsSource = State.state.allElements.addOrGetElement(feature);
+        // Every object is tied to exactly one layer
+        const layer = this._layerDict[feature._matching_layer_id];
+        return layer?.GenerateLeafletSubstyle(tagsSource, offsetColor);
+    }
+
     private pointToLayer(feature, latLng): L.Layer {
         // Leaflet cannot handle geojson points natively
         // We have to convert them to the appropriate icon
@@ -131,11 +140,38 @@ export default class ShowDataLayer {
         });
     }
 
+    private addOffsetCopy(feature, offset, offsetColor) {
+        const newLayer = L.GeoJSON.geometryToLayer(feature,{});
+        newLayer.setOffset(offset);
+        newLayer.setStyle(this.createOffsetStyleFor(feature, offsetColor))
+        newLayer.addTo(this._leafletMap.data);
+    }
+
+    // private addOffsetLayerCopy(feature, layer, offsetSpec) {
+    //     const newLayer = L.GeoJSON.geometryToLayer(feature,offsetSpec.options);
+    //     layer.
+    //     // newLayer.setOffset(offsetSpec.amount);
+    //     newLayer.addTo(this._leafletMap.data);
+    // }
+
+    // feature seems to be the geojson feature, leafletLayer the generated Leaflet layer object
+    // Idea: Filter ways, if way, add offset-lines to map.  These should
     private postProcessFeature(feature, leafletLayer: L.Layer) {
         const layer: LayerConfig = this._layerDict[feature._matching_layer_id];
         if (layer === undefined) {
             console.warn("No layer found for object (probably a now disabled layer)", feature, this._layerDict)
             return;
+        }
+        const weight = feature.geometry.type == "LineString" ? leafletLayer.options.style(feature).weight : undefined;
+        if (layer.leftOffsetColor != undefined && weight != undefined) {
+            this.addOffsetCopy(feature,-weight,layer.leftOffsetColor);
+        }
+
+        if (layer.rightOffsetColor != undefined && weight != undefined) {
+            this.addOffsetCopy(feature,weight,layer.rightOffsetColor);
+        }
+        if (layer.showArrows && weight != undefined) {
+            leafletLayer.setText('  ▷  ',{repeat: true, offset : weight/2.0})
         }
         if (layer.title === undefined || !this._enablePopups) {
             // No popup action defined -> Don't do anything
