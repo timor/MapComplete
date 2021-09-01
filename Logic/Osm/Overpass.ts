@@ -63,7 +63,7 @@ export class Overpass {
             filter += '(' + extraScript + ');';
         }
         const query =
-            `[out:json][timeout:${this._timeout.data}]${bbox};(${filter});out body;${this._includeMeta ? 'out meta;' : ''}>;out skel qt;`
+            `[out:json][maxsize:10000000][timeout:${this._timeout.data}]${bbox};(${filter});out body;${this._includeMeta ? 'out meta;' : ''}>;out skel qt;`
         return `${this._interpreterUrl.data}?data=${encodeURIComponent(query)}`
     }
 }
