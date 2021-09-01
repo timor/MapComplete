@@ -35,6 +35,7 @@
                         "highway=residential",
                         "highway=tertiary",
                         "highway=unclassified",
+                        "highway=service",
                         "highway=primary",
                         "highway=secondary",
                         "highway=footway",
@@ -55,7 +56,8 @@
                  },
                  "condition": { "or": [
                      "highway=footway",
-                     "highway=path"
+                     "highway=path",
+                     { "and": [ "highway=service", "service=parking_aisle" ] }
                  ]},
                  "mappings": [
                      {
