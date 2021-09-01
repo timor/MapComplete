@@ -39,7 +39,9 @@
                         "highway=primary",
                         "highway=secondary",
                         "highway=footway",
+                        "highway=living_street",
                         "highway=path",
+                        "highway=pedestrian",
                         "public_transport=platform"
                     ]
                 }
@@ -59,7 +61,9 @@
                      "highway=footway",
                      "highway=path",
                      "public_transport=platform",
-                     "service=parking_aisle"
+                     "highway=service",
+                     "highway=living_street",
+                     "highway=pedestrian"
                  ]},
                  "mappings": [
                      {
