@@ -39,7 +39,8 @@
                         "highway=primary",
                         "highway=secondary",
                         "highway=footway",
-                        "highway=path"
+                        "highway=path",
+                        "public_transport=platform"
                     ]
                 }
             },
@@ -57,7 +58,8 @@
                  "condition": { "or": [
                      "highway=footway",
                      "highway=path",
-                     { "and": [ "highway=service", "service=parking_aisle" ] }
+                     "public_transport=platform",
+                     "service=parking_aisle"
                  ]},
                  "mappings": [
                      {
