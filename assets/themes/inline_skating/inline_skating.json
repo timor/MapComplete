@@ -13,7 +13,7 @@
     "en",
     "nl"
   ],
-  "maintainer": "MapComplete",
+  "maintainer": "timor",
   "defaultBackgroundId": "CartoDB.Voyager",
   "icon": "./assets/themes/cycle_infra/cycle-infra.svg",
   "version": "0",
@@ -135,6 +135,8 @@
           ]
         }
       ],
+      "showArrows": true,
+      "allowSplit": true,
       "isShown": {
         "render": "yes",
         "mappings": [
@@ -454,6 +456,7 @@
         ]
       },
       "showArrows": true,
+      "allowSplit": true,
       "leftOffsetColor": {
         "render": "rgba(170, 170, 170, 0.7)",
         "mappings": [
