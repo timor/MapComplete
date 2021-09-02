@@ -38,8 +38,18 @@
             "highway=living_street",
             "highway=path",
             "highway=pedestrian",
-              "public_transport=platform",
-              { "and": [ "highway=cycleway", {"or": [ "foot=designated", "foot=yes" ]}]}
+            "public_transport=platform",
+            {
+              "and": [
+                "highway=cycleway",
+                {
+                  "or": [
+                    "foot=designated",
+                    "foot=yes"
+                  ]
+                }
+              ]
+            }
           ]
         }
       },
@@ -435,66 +445,65 @@
                 "access=private",
                 "sidewalk=no",
                 "sidewalk=none",
-                  "sidewalk=separate",
-                  "foot=use_sidepath"
-
+                "sidewalk=separate",
+                "foot=use_sidepath"
               ]
             },
             "then": "no"
           }
         ]
       },
-        "showArrows": true,
-        "leftOffsetColor": {
-            "render": "rgba(170, 170, 170, 0.7)",
-            "mappings": [
-                {
-                    "if": "sidewalk:left:smoothness=excellent",
-                    "then": "rgba(0, 200, 0, 0.7)"
-                },
-                {
-                    "if": "sidewalk:left:smoothness=good",
-                    "then": "rgba(80, 160, 0, 0.7)"
-                },
-                {
-                    "if": "sidewalk:left:smoothness=intermediate",
-                    "then": "rgba(200, 160, 0, 0.7)"
-                },
-                {
-                    "if": {
-                        "or": [
-                            "sidewalk:left:smoothness~.+"
-                        ]
-                    },
-                    "then": "rgba(200, 0, 0, 0.7)"
-                }
-            ]
-        },
-        "rightOffsetColor": {
-            "render": "rgba(170, 170, 170, 0.7)",
-            "mappings": [
-                {
-                    "if": "sidewalk:right:smoothness=excellent",
-                    "then": "rgba(0, 200, 0, 0.7)"
-                },
-                {
-                    "if": "sidewalk:right:smoothness=good",
-                    "then": "rgba(80, 160, 0, 0.7)"
-                },
-                {
-                    "if": "sidewalk:right:smoothness=intermediate",
-                    "then": "rgba(200, 160, 0, 0.7)"
-                },
-                {
-                    "if": {
-                        "or": [
-                            "sidewalk:right:smoothness~.+"
-                        ]
-                    },
-                    "then": "rgba(200, 0, 0, 0.7)"
-                }
-            ]
-        },
+      "showArrows": true,
+      "leftOffsetColor": {
+        "render": "rgba(170, 170, 170, 0.7)",
+        "mappings": [
+          {
+            "if": "sidewalk:left:smoothness=excellent",
+            "then": "rgba(0, 200, 0, 0.7)"
+          },
+          {
+            "if": "sidewalk:left:smoothness=good",
+            "then": "rgba(80, 160, 0, 0.7)"
+          },
+          {
+            "if": "sidewalk:left:smoothness=intermediate",
+            "then": "rgba(200, 160, 0, 0.7)"
+          },
+          {
+            "if": {
+              "or": [
+                "sidewalk:left:smoothness~.+"
+              ]
+            },
+            "then": "rgba(200, 0, 0, 0.7)"
+          }
+        ]
+      },
+      "rightOffsetColor": {
+        "render": "rgba(170, 170, 170, 0.7)",
+        "mappings": [
+          {
+            "if": "sidewalk:right:smoothness=excellent",
+            "then": "rgba(0, 200, 0, 0.7)"
+          },
+          {
+            "if": "sidewalk:right:smoothness=good",
+            "then": "rgba(80, 160, 0, 0.7)"
+          },
+          {
+            "if": "sidewalk:right:smoothness=intermediate",
+            "then": "rgba(200, 160, 0, 0.7)"
+          },
+          {
+            "if": {
+              "or": [
+                "sidewalk:right:smoothness~.+"
+              ]
+            },
+            "then": "rgba(200, 0, 0, 0.7)"
+          }
+        ]
+      },
       "color": {
         "render": "rgba(170, 170, 170, 0.7)",
         "mappings": [
