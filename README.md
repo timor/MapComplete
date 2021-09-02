@@ -1,4 +1,4 @@
-[Inline Skating Dev Theme](https://mapcomplete.osm.be?userlayout=https://raw.githubusercontent.com/timor/MapComplete/inline-skating/assets/themes/inline_skating/inline_skating.json)
+[Inline Skating Dev Theme](https://timor.github.io/mapcomplete/inline_skating.html)
 
 # MapComplete
 
