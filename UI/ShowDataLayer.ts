@@ -171,7 +171,7 @@ export default class ShowDataLayer {
             this.addOffsetCopy(feature,weight,layer.rightOffsetColor);
         }
         if (layer.showArrows && weight != undefined) {
-            leafletLayer.setText('  ▷  ',{repeat: true, offset : weight/2.0})
+            leafletLayer.setText(' ⏩',{repeat: false, offset : weight/2.0})
         }
         if (layer.title === undefined || !this._enablePopups) {
             // No popup action defined -> Don't do anything
