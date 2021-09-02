@@ -153,6 +153,7 @@
           }
         ]
       },
+      "width": 8,
       "color": {
         "render": "rgba(170, 170, 170, 0.7)",
         "mappings": [
@@ -507,6 +508,7 @@
           }
         ]
       },
+      "width": 8,
       "color": {
         "render": "rgba(170, 170, 170, 0.7)",
         "mappings": [
