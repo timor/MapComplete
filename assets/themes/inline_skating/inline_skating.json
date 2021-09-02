@@ -193,7 +193,9 @@
             "highway=tertiary",
             "highway=unclassified",
             "highway=primary",
-            "highway=secondary"
+            "highway=primary_link",
+            "highway=secondary",
+            "highway=secondary_link"
           ]
         }
       },
